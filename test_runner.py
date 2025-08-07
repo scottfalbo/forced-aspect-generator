@@ -100,9 +100,9 @@ try:
     print("✓ Testing multiple density and resolution configurations:")
     
     for density in densities:
-        # Setup grid generation
-        camera_grid = create_standard_camera(distance=12.0, fov_degrees=50.0)
-        camera_grid.orbit_around_target(45.0, 30.0, 12.0)
+        # Setup grid generation with better camera positioning
+        camera_grid = create_standard_camera(distance=20.0, fov_degrees=35.0)
+        camera_grid.orbit_around_target(35.0, 20.0, 20.0)  # More moderate angles and distance
         
         grid_config = GridConfig(
             density=density,
@@ -128,9 +128,9 @@ try:
     print("📄 Phase 5: SVG Rendering")
     print("-" * 40)
     
-    # Create final grid for export
-    final_camera = create_standard_camera(distance=12.0, fov_degrees=50.0)
-    final_camera.orbit_around_target(45.0, 30.0, 12.0)
+    # Create final grid for export with better camera positioning
+    final_camera = create_standard_camera(distance=20.0, fov_degrees=35.0)
+    final_camera.orbit_around_target(35.0, 20.0, 20.0)  # More moderate perspective
     
     final_config = GridConfig(density=0.8, show_panel_boundaries=True)
     final_generator = GridGenerator(final_config)
