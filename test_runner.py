@@ -91,7 +91,7 @@ try:
     print("-" * 40)
     
     # Create grid with different density settings
-    densities = [0.4, 0.6, 1.0, 1.5]
+    densities = [0.5, 0.75, 1.0]  # Much lower densities for clean, sparse grids
     output_resolutions = [(1920, 1080), (3840, 2160), (1080, 1080)]
     
     exports_dir = Path("exports")
@@ -100,15 +100,15 @@ try:
     print("✓ Testing multiple density and resolution configurations:")
     
     for density in densities:
-        # Setup grid generation with better camera positioning
-        camera_grid = create_standard_camera(distance=20.0, fov_degrees=35.0)
-        camera_grid.orbit_around_target(35.0, 20.0, 20.0)  # More moderate angles and distance
+        # Setup grid generation with balanced camera to see all three panels
+        camera_grid = create_standard_camera(distance=40.0, fov_degrees=55.0)
+        camera_grid.orbit_around_target(-35.0, -20.0, 40.0)  # More balanced angles to see left wall
         
         grid_config = GridConfig(
             density=density,
             show_panel_boundaries=True,
-            min_line_length=50,
-            max_lines_per_panel=25
+            min_line_length=15,   # Lower threshold to catch left wall lines
+            max_lines_per_panel=25  # Slightly higher limit to ensure all panels visible
         )
         generator = GridGenerator(grid_config)
         
@@ -128,11 +128,16 @@ try:
     print("📄 Phase 5: SVG Rendering")
     print("-" * 40)
     
-    # Create final grid for export with better camera positioning
-    final_camera = create_standard_camera(distance=20.0, fov_degrees=35.0)
-    final_camera.orbit_around_target(35.0, 20.0, 20.0)  # More moderate perspective
+    # Create final grid with balanced view to show all three panels
+    final_camera = create_standard_camera(distance=40.0, fov_degrees=55.0)
+    final_camera.orbit_around_target(-35.0, -20.0, 40.0)  # Balanced to see floor, right wall, and left wall
     
-    final_config = GridConfig(density=0.8, show_panel_boundaries=True)
+    final_config = GridConfig(
+        density=0.75,  # Low density for clean, sparse grid
+        show_panel_boundaries=True,
+        min_line_length=15,   # Lower threshold to include left wall
+        max_lines_per_panel=25
+    )
     final_generator = GridGenerator(final_config)
     final_grid = final_generator.generate_grid(panels, final_camera, 1920, 1080)
     

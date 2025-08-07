@@ -146,32 +146,32 @@ class GridGenerator:
     
     def _generate_floor_grid(self, panel: Panel, view_matrix, projection_matrix,
                             screen_width: int, screen_height: int) -> List[GridLine]:
-        """Generate grid lines for a floor panel."""
+        """Generate uniform square grid for floor panel."""
         lines = []
         corners = panel.corners
         
-        # Assume floor is defined by corners in order: [origin, right, far-right, far-left]
+        # Floor corners: [origin, right_edge, far_right, far_left]
         origin = corners[0]      # (0, 0, 0)
-        right = corners[1]       # (width, 0, 0)  
+        right_edge = corners[1]  # (width, 0, 0)  
         far_right = corners[2]   # (width, 0, depth)
         far_left = corners[3]    # (0, 0, depth)
         
         # Calculate dimensions
-        width = abs(right.x - origin.x)
+        width = abs(right_edge.x - origin.x)
         depth = abs(far_left.z - origin.z)
         
-        # Calculate grid spacing based on density
-        grid_spacing = self._calculate_grid_spacing(max(width, depth))
+        # Use consistent square grid spacing
+        grid_spacing = self._calculate_grid_spacing(min(width, depth))
         
-        # Generate lines parallel to X axis (depth direction)
-        num_x_lines = int(depth / grid_spacing) + 1
-        for i in range(1, num_x_lines):  # Skip boundaries
-            z_pos = origin.z + i * grid_spacing
+        # Generate horizontal lines (parallel to X-axis, spaced in Z direction)
+        num_z_lines = int(depth / grid_spacing)
+        for i in range(1, num_z_lines):  # Skip boundaries, start from 1
+            z_pos = origin.z + (i * grid_spacing)
             if z_pos >= far_left.z:
                 break
                 
             start_3d = Point3D(origin.x, origin.y, z_pos)
-            end_3d = Point3D(right.x, origin.y, z_pos)
+            end_3d = Point3D(right_edge.x, origin.y, z_pos)
             
             line = self._project_and_clip_line(
                 start_3d, end_3d, view_matrix, projection_matrix,
@@ -181,11 +181,11 @@ class GridGenerator:
             if line:
                 lines.append(line)
         
-        # Generate lines parallel to Z axis (width direction)
-        num_z_lines = int(width / grid_spacing) + 1
-        for i in range(1, num_z_lines):  # Skip boundaries
-            x_pos = origin.x + i * grid_spacing
-            if x_pos >= right.x:
+        # Generate vertical lines (parallel to Z-axis, spaced in X direction)
+        num_x_lines = int(width / grid_spacing)
+        for i in range(1, num_x_lines):  # Skip boundaries, start from 1
+            x_pos = origin.x + (i * grid_spacing)
+            if x_pos >= right_edge.x:
                 break
                 
             start_3d = Point3D(x_pos, origin.y, origin.z)
@@ -203,47 +203,46 @@ class GridGenerator:
     
     def _generate_wall_grid(self, panel: Panel, view_matrix, projection_matrix,
                            screen_width: int, screen_height: int) -> List[GridLine]:
-        """Generate grid lines for a wall panel."""
+        """Generate uniform square grid for wall panels."""
         lines = []
         corners = panel.corners
         
-        # Assume wall corners are: [bottom-near, bottom-far, top-far, top-near]
-        bottom_near = corners[0]
-        bottom_far = corners[1]
-        top_far = corners[2]
-        top_near = corners[3]
+        # Wall corners: [near-bottom, far-bottom, far-top, near-top]
+        near_bottom = corners[0]
+        far_bottom = corners[1]
+        far_top = corners[2]
+        near_top = corners[3]
         
         # Calculate dimensions
         if panel.label == "Left Wall":
             # Left wall: varies in Z (depth) and Y (height)
-            width = abs(bottom_far.z - bottom_near.z)
-            height = abs(top_near.y - bottom_near.y)
+            width = abs(far_bottom.z - near_bottom.z)
+            height = abs(near_top.y - near_bottom.y)
         else:  # Right Wall
             # Right wall: varies in X (width) and Y (height)
-            width = abs(bottom_far.x - bottom_near.x)
-            height = abs(top_near.y - bottom_near.y)
+            width = abs(far_bottom.x - near_bottom.x)
+            height = abs(near_top.y - near_bottom.y)
         
         # Skip panels with zero dimensions
         if width == 0 or height == 0:
             return lines
         
-        # Calculate grid spacing
-        grid_spacing_width = self._calculate_grid_spacing(width)
-        grid_spacing_height = self._calculate_grid_spacing(height)
+        # Use same square grid spacing as floor
+        grid_spacing = self._calculate_grid_spacing(min(width, height))
         
-        # Generate horizontal lines (constant height)
-        num_h_lines = int(height / grid_spacing_height) + 1
-        for i in range(1, num_h_lines):
-            y_pos = bottom_near.y + i * grid_spacing_height
-            if y_pos >= top_near.y:
+        # Generate horizontal lines (constant height) - same spacing as floor
+        num_h_lines = int(height / grid_spacing)
+        for i in range(1, num_h_lines):  # Skip boundaries
+            y_pos = near_bottom.y + (i * grid_spacing)
+            if y_pos >= near_top.y:
                 break
             
             if panel.label == "Left Wall":
-                start_3d = Point3D(bottom_near.x, y_pos, bottom_near.z)
-                end_3d = Point3D(bottom_far.x, y_pos, bottom_far.z)
+                start_3d = Point3D(near_bottom.x, y_pos, near_bottom.z)
+                end_3d = Point3D(far_bottom.x, y_pos, far_bottom.z)
             else:  # Right Wall
-                start_3d = Point3D(bottom_near.x, y_pos, bottom_near.z)
-                end_3d = Point3D(bottom_far.x, y_pos, bottom_far.z)
+                start_3d = Point3D(near_bottom.x, y_pos, near_bottom.z)
+                end_3d = Point3D(far_bottom.x, y_pos, far_bottom.z)
             
             line = self._project_and_clip_line(
                 start_3d, end_3d, view_matrix, projection_matrix,
@@ -253,21 +252,21 @@ class GridGenerator:
             if line:
                 lines.append(line)
         
-        # Generate vertical lines
-        num_v_lines = int(width / grid_spacing_width) + 1
-        for i in range(1, num_v_lines):
+        # Generate vertical lines - same spacing as floor
+        num_v_lines = int(width / grid_spacing)
+        for i in range(1, num_v_lines):  # Skip boundaries
             if panel.label == "Left Wall":
-                z_pos = bottom_near.z + i * grid_spacing_width
-                if z_pos >= bottom_far.z:
+                z_pos = near_bottom.z + (i * grid_spacing)
+                if z_pos >= far_bottom.z:
                     break
-                start_3d = Point3D(bottom_near.x, bottom_near.y, z_pos)
-                end_3d = Point3D(top_near.x, top_near.y, z_pos)
+                start_3d = Point3D(near_bottom.x, near_bottom.y, z_pos)
+                end_3d = Point3D(near_top.x, near_top.y, z_pos)
             else:  # Right Wall
-                x_pos = bottom_near.x + i * grid_spacing_width
-                if x_pos >= bottom_far.x:
+                x_pos = near_bottom.x + (i * grid_spacing)
+                if x_pos >= far_bottom.x:
                     break
-                start_3d = Point3D(x_pos, bottom_near.y, bottom_near.z)
-                end_3d = Point3D(x_pos, top_near.y, top_near.z)
+                start_3d = Point3D(x_pos, near_bottom.y, near_bottom.z)
+                end_3d = Point3D(x_pos, near_top.y, near_top.z)
             
             line = self._project_and_clip_line(
                 start_3d, end_3d, view_matrix, projection_matrix,
@@ -280,22 +279,15 @@ class GridGenerator:
         return lines
     
     def _calculate_grid_spacing(self, dimension: float) -> float:
-        """Calculate grid line spacing based on dimension and density."""
-        # Protect against zero or negative dimensions
-        if dimension <= 0:
-            return 1.0  # Default spacing for invalid dimensions
+        """Calculate much larger grid spacing for clean, readable squares."""
+        # Create much larger grid squares like the reference image
+        # Base square size should be much bigger - around 24 inches for clean appearance
+        base_square_size = 24.0  # Large squares for clean grid
         
-        # Base spacing that looks good for typical room sizes
-        base_spacing = dimension * 0.1  # 10% of dimension
+        # Adjust by density (keep density effect minimal for consistency)
+        square_size = base_square_size / max(0.5, self.config.density)
         
-        # Adjust by density setting
-        spacing = base_spacing / self.config.density
-        
-        # Ensure reasonable bounds
-        min_spacing = dimension * 0.02  # At least 2% of dimension
-        max_spacing = dimension * 0.5   # At most 50% of dimension
-        
-        return max(min_spacing, min(spacing, max_spacing))
+        return square_size
     
     def _clip_line_to_viewport(self, start: Point2D, end: Point2D, 
                               screen_width: int, screen_height: int) -> tuple[Point2D, Point2D] | None:

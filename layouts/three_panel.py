@@ -77,15 +77,15 @@ class ThreePanelLayout(BaseLayout):
     
     def _create_floor_panel(self, width: float, depth: float) -> Panel:
         """
-        Create the floor panel.
+        Create the floor panel for an inner corner.
         
-        The floor lies in the XZ plane (Y=0) and extends from the origin.
+        The floor extends from the viewer toward the back corner.
         """
         corners = [
-            Point3D(0.0, 0.0, 0.0),      # Origin corner
-            Point3D(width, 0.0, 0.0),    # Right edge
-            Point3D(width, 0.0, depth),  # Far right corner
-            Point3D(0.0, 0.0, depth)     # Far left corner
+            Point3D(0.0, 0.0, 0.0),      # Near corner (viewer side)
+            Point3D(width, 0.0, 0.0),    # Near right edge
+            Point3D(width, 0.0, depth),  # Far right corner (back)
+            Point3D(0.0, 0.0, depth)     # Far left corner (back)
         ]
         
         # Floor normal points up (positive Y)
@@ -100,19 +100,19 @@ class ThreePanelLayout(BaseLayout):
     
     def _create_left_wall_panel(self, depth: float, height: float) -> Panel:
         """
-        Create the left wall panel.
+        Create the left wall panel for an inner corner.
         
-        The left wall lies in the YZ plane (X=0) and extends upward from the floor.
-        Corner order: [bottom-near, bottom-far, top-far, top-near]
+        The left wall is on the viewer's left side, extending back.
+        Corner order: [near-bottom, far-bottom, far-top, near-top]
         """
         corners = [
-            Point3D(0.0, 0.0, 0.0),      # Bottom corner at origin (bottom-near)
-            Point3D(0.0, 0.0, depth),    # Bottom corner at far end (bottom-far)
-            Point3D(0.0, height, depth), # Top corner at far end (top-far)
-            Point3D(0.0, height, 0.0)    # Top corner at origin (top-near)
+            Point3D(0.0, 0.0, 0.0),      # Near bottom corner (viewer side)
+            Point3D(0.0, 0.0, depth),    # Far bottom corner (back wall)
+            Point3D(0.0, height, depth), # Far top corner (back wall)
+            Point3D(0.0, height, 0.0)    # Near top corner (viewer side)
         ]
         
-        # Left wall normal points right (positive X)
+        # Left wall normal points inward (positive X - toward the room)
         normal = Point3D(1.0, 0.0, 0.0)
         
         return Panel(
@@ -124,19 +124,19 @@ class ThreePanelLayout(BaseLayout):
     
     def _create_right_wall_panel(self, width: float, height: float) -> Panel:
         """
-        Create the right wall panel.
+        Create the right wall panel for an inner corner.
         
-        The right wall lies in the XY plane (Z=0) and extends upward from the floor.
-        Corner order: [bottom-near, bottom-far, top-far, top-near]
+        The right wall is on the viewer's right side, extending back.
+        Corner order: [near-bottom, far-bottom, far-top, near-top]
         """
         corners = [
-            Point3D(0.0, 0.0, 0.0),      # Bottom corner at origin (bottom-near)
-            Point3D(width, 0.0, 0.0),    # Bottom corner at far end (bottom-far)
-            Point3D(width, height, 0.0), # Top corner at far end (top-far)
-            Point3D(0.0, height, 0.0)    # Top corner at origin (top-near)
+            Point3D(0.0, 0.0, 0.0),      # Near bottom corner (viewer side)
+            Point3D(width, 0.0, 0.0),    # Far bottom corner (back wall)
+            Point3D(width, height, 0.0), # Far top corner (back wall)
+            Point3D(0.0, height, 0.0)    # Near top corner (viewer side)
         ]
         
-        # Right wall normal points forward (positive Z)
+        # Right wall normal points inward (positive Z - toward the room)
         normal = Point3D(0.0, 0.0, 1.0)
         
         return Panel(
@@ -173,35 +173,34 @@ class ThreePanelLayout(BaseLayout):
     
     def get_optimal_camera_position(self) -> Point3D:
         """
-        Get an optimal camera position for viewing this layout.
+        Get an optimal camera position for viewing this inner corner layout.
         
         Returns:
-            Suggested camera position for good perspective view
+            Camera position as if standing in the room looking at the corner
         """
         bounds = self.get_total_bounds()
         
-        # Position camera at corner diagonal, elevated, and back from the scene
-        distance_factor = 1.5  # Multiplier for viewing distance
-        
-        x = bounds["max_x"] * distance_factor
-        y = bounds["max_y"] * 0.6  # Slightly below top for good angle
-        z = bounds["max_z"] * distance_factor
+        # Position camera in front of the corner, looking toward it
+        # This simulates standing in the room looking at the corner
+        x = bounds["max_x"] * -0.5  # Back away from the corner in X
+        y = bounds["max_y"] * 0.4   # Eye level height
+        z = bounds["max_z"] * -0.5  # Back away from the corner in Z
         
         return Point3D(x, y, z)
     
     def get_optimal_camera_target(self) -> Point3D:
         """
-        Get optimal camera target point for this layout.
+        Get optimal camera target point for this inner corner layout.
         
         Returns:
-            Point to aim camera at for good composition
+            Point to aim camera at - the back corner intersection
         """
         bounds = self.get_total_bounds()
         
-        # Target the center of the floor area, slightly elevated
-        x = bounds["max_x"] * 0.4
-        y = bounds["max_y"] * 0.2
-        z = bounds["max_z"] * 0.4
+        # Target the back corner where walls meet
+        x = bounds["max_x"] * 0.8
+        y = bounds["max_y"] * 0.3
+        z = bounds["max_z"] * 0.8
         
         return Point3D(x, y, z)
 
