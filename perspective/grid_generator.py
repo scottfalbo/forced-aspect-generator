@@ -113,22 +113,13 @@ class GridGenerator:
             start_3d = corners[i]
             end_3d = corners[(i + 1) % 4]
             
-            # Project to screen coordinates
-            start_2d = project_to_screen(
-                start_3d, view_matrix, projection_matrix, screen_width, screen_height
-            )
-            end_2d = project_to_screen(
-                end_3d, view_matrix, projection_matrix, screen_width, screen_height
+            # Project and clip line
+            line = self._project_and_clip_line(
+                start_3d, end_3d, view_matrix, projection_matrix,
+                screen_width, screen_height, panel.label, "boundary"
             )
             
-            # Clip line to viewport bounds with margin
-            clipped_line = self._clip_line_to_viewport(
-                start_2d, end_2d, screen_width, screen_height
-            )
-            
-            if clipped_line:
-                # Create boundary line
-                line = GridLine(clipped_line[0], clipped_line[1], panel.label, "boundary")
+            if line:
                 lines.append(line)
         
         return lines
@@ -182,15 +173,13 @@ class GridGenerator:
             start_3d = Point3D(origin.x, origin.y, z_pos)
             end_3d = Point3D(right.x, origin.y, z_pos)
             
-            start_2d = project_to_screen(
-                start_3d, view_matrix, projection_matrix, screen_width, screen_height
-            )
-            end_2d = project_to_screen(
-                end_3d, view_matrix, projection_matrix, screen_width, screen_height
+            line = self._project_and_clip_line(
+                start_3d, end_3d, view_matrix, projection_matrix,
+                screen_width, screen_height, panel.label, "horizontal"
             )
             
-            line = GridLine(start_2d, end_2d, panel.label, "horizontal")
-            lines.append(line)
+            if line:
+                lines.append(line)
         
         # Generate lines parallel to Z axis (width direction)
         num_z_lines = int(width / grid_spacing) + 1
@@ -202,15 +191,13 @@ class GridGenerator:
             start_3d = Point3D(x_pos, origin.y, origin.z)
             end_3d = Point3D(x_pos, origin.y, far_left.z)
             
-            start_2d = project_to_screen(
-                start_3d, view_matrix, projection_matrix, screen_width, screen_height
-            )
-            end_2d = project_to_screen(
-                end_3d, view_matrix, projection_matrix, screen_width, screen_height
+            line = self._project_and_clip_line(
+                start_3d, end_3d, view_matrix, projection_matrix,
+                screen_width, screen_height, panel.label, "vertical"
             )
             
-            line = GridLine(start_2d, end_2d, panel.label, "vertical")
-            lines.append(line)
+            if line:
+                lines.append(line)
         
         return lines
     
@@ -258,15 +245,13 @@ class GridGenerator:
                 start_3d = Point3D(bottom_near.x, y_pos, bottom_near.z)
                 end_3d = Point3D(bottom_far.x, y_pos, bottom_far.z)
             
-            start_2d = project_to_screen(
-                start_3d, view_matrix, projection_matrix, screen_width, screen_height
-            )
-            end_2d = project_to_screen(
-                end_3d, view_matrix, projection_matrix, screen_width, screen_height
+            line = self._project_and_clip_line(
+                start_3d, end_3d, view_matrix, projection_matrix,
+                screen_width, screen_height, panel.label, "horizontal"
             )
             
-            line = GridLine(start_2d, end_2d, panel.label, "horizontal")
-            lines.append(line)
+            if line:
+                lines.append(line)
         
         # Generate vertical lines
         num_v_lines = int(width / grid_spacing_width) + 1
@@ -284,15 +269,13 @@ class GridGenerator:
                 start_3d = Point3D(x_pos, bottom_near.y, bottom_near.z)
                 end_3d = Point3D(x_pos, top_near.y, top_near.z)
             
-            start_2d = project_to_screen(
-                start_3d, view_matrix, projection_matrix, screen_width, screen_height
-            )
-            end_2d = project_to_screen(
-                end_3d, view_matrix, projection_matrix, screen_width, screen_height
+            line = self._project_and_clip_line(
+                start_3d, end_3d, view_matrix, projection_matrix,
+                screen_width, screen_height, panel.label, "vertical"
             )
             
-            line = GridLine(start_2d, end_2d, panel.label, "vertical")
-            lines.append(line)
+            if line:
+                lines.append(line)
         
         return lines
     
